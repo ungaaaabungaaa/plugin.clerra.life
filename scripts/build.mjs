@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite';
 import { build, mergeConfig } from 'vite';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -9,6 +10,7 @@ const watch = process.argv.includes('--watch');
 
 const baseConfig = {
   publicDir: 'public',
+  plugins: [tailwindcss()],
   build: {
     emptyOutDir: false,
     sourcemap: true,
@@ -41,7 +43,8 @@ async function buildEntry({ entry, name }) {
           entry,
           formats: ['iife'],
           name: `Clerra${name[0].toUpperCase()}${name.slice(1)}`,
-          fileName: () => `${name}.js`
+          fileName: () => `${name}.js`,
+          ...(name === 'popup' ? { cssFileName: 'popup' } : {})
         },
         rollupOptions: {
           output: {

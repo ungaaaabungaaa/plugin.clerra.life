@@ -1,3 +1,4 @@
+import './popup.css';
 import { getThemeById, ACCENTS, THEMES } from '../lib/themes';
 import { loadSettings } from '../lib/settings';
 import type { ClerraSettings } from '../lib/types';
@@ -51,12 +52,13 @@ function render(): void {
   const theme = getThemeById(draftSettings.themeId);
 
   appRoot.innerHTML = `
-    <div class="popup-shell" style="--clerra-theme-gradient:${theme.gradient}">
-      <div class="popup-frame">
-        <div class="popup-card">
-          <div class="popup-stage">
-            <div class="popup-base" aria-hidden="true"></div>
-          </div>
+    <div class="bg-[#5ea6cf] p-[14px]">
+      <div class="h-[218px] w-[304px] rounded-[28px] bg-[#5ea6cf]">
+        <div class="flex h-full items-end justify-center px-[4%] pb-[4.5%]">
+          <div
+            aria-hidden="true"
+            class="h-[21.1%] w-[65%] rounded-full bg-black"
+          ></div>
         </div>
       </div>
     </div>

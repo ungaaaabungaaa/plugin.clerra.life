@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@source "../**/*.{ts,html}";
+@source "../../public/popup.html";
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    min-width: 0;
+    min-height: 0;
+    background: transparent;
+  }
+
+  body {
+    color: white;
+  }
+}

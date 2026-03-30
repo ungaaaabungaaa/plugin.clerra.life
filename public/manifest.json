@@ -3,6 +3,12 @@
   "name": "Clerra",
   "version": "1.0.0",
   "description": "Control how deeply you experience any website.",
+  "icons": {
+    "16": "favicon-16x16.png",
+    "32": "favicon-32x32.png",
+    "192": "android-chrome-192x192.png",
+    "512": "android-chrome-512x512.png"
+  },
   "permissions": ["storage", "tabs"],
   "host_permissions": ["<all_urls>", "https://generativelanguage.googleapis.com/*"],
   "background": {
@@ -10,6 +16,10 @@
   },
   "action": {
     "default_title": "Clerra",
+    "default_icon": {
+      "16": "favicon-16x16.png",
+      "32": "favicon-32x32.png"
+    },
     "default_popup": "popup.html"
   },
   "content_scripts": [
