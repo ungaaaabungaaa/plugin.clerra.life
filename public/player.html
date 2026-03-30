@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clerra Player</title>
+    <link rel="stylesheet" href="player.css" />
+  </head>
+  <body>
+    <div class="player-shell">
+      <div class="player-state" id="playerState">Clerra music</div>
+      <div class="player-frame-wrap">
+        <iframe
+          id="playerFrame"
+          title="Clerra music player"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
+      </div>
+      <button id="fallbackButton" class="fallback-button" type="button">Open playlist in YouTube</button>
+    </div>
+    <script src="player.js"></script>
+  </body>
+</html>
