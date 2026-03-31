@@ -52,14 +52,12 @@ function render(): void {
   const theme = getThemeById(draftSettings.themeId);
 
   appRoot.innerHTML = `
-    <div class="bg-[#5ea6cf] p-[14px]">
-      <div class="h-[218px] w-[304px] rounded-[28px] bg-[#5ea6cf]">
-        <div class="flex h-full items-end justify-center px-[4%] pb-[4.5%]">
-          <div
-            aria-hidden="true"
-            class="h-[21.1%] w-[65%] rounded-full bg-black"
-          ></div>
-        </div>
+    <div class="bg-[#5ea6cf]">
+      <div class="relative h-[218px] w-[304px] bg-[#5ea6cf] shadow-[inset_0_0_0_3px_#000]">
+        <div
+          aria-hidden="true"
+          class="pointer-events-none absolute bottom-[14px] left-1/2 h-[20%] w-[78%] -translate-x-1/2 rounded-[999px] bg-black"
+        ></div>
       </div>
     </div>
   `;
