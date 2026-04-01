@@ -1,8 +1,7 @@
 import './popup.css';
-import { getThemeById, ACCENTS, THEMES } from '../lib/themes';
 import { loadSettings } from '../lib/settings';
 import type { ClerraSettings } from '../lib/types';
-import type { RuntimeResponse, ToggleOverlayResponse, UpdateSettingsResponse } from '../lib/messages';
+import { TAB_ICONS, type InlineIcon } from './tab-icons';
 
 const app = document.querySelector<HTMLDivElement>('#app');
 
@@ -13,51 +12,69 @@ if (!app) {
 const appRoot = app;
 
 let draftSettings: ClerraSettings;
-let statusMessage = '';
 
-function escapeAttribute(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
+type PopupTabId = 'music' | 'theme' | 'settings';
 
-function themeMarkup(themeId: string): string {
-  return THEMES.map((theme) => `
-    <button
-      type="button"
-      class="theme-chip ${theme.id === themeId ? 'is-active' : ''}"
-      data-theme-id="${theme.id}"
-      title="${theme.name}"
-      style="background:${theme.gradient}"
-    ></button>
-  `).join('');
-}
+type PopupTab = {
+  id: PopupTabId;
+  label: string;
+  icon: InlineIcon;
+};
 
-function accentMarkup(accentId: string): string {
-  return ACCENTS.map((accent) => `
-    <button
-      type="button"
-      class="accent-chip ${accent.id === accentId ? 'is-active' : ''}"
-      data-accent-id="${accent.id}"
-      title="${accent.name}"
-      style="background:${accent.color}"
-    ></button>
-  `).join('');
+let activeTab: PopupTabId = 'music';
+
+const POPUP_TABS: PopupTab[] = [
+  {
+    id: 'music',
+    label: 'Music tab',
+    icon: TAB_ICONS.music
+  },
+  {
+    id: 'theme',
+    label: 'Theme tab',
+    icon: TAB_ICONS.theme
+  },
+  {
+    id: 'settings',
+    label: 'Setting tab',
+    icon: TAB_ICONS.settings
+  }
+];
+
+function iconMarkup(icon: InlineIcon): string {
+  return `
+    <svg
+      class="popup-tab__icon"
+      viewBox="0 0 ${icon.width} ${icon.height}"
+      aria-hidden="true"
+      focusable="false"
+    >
+      ${icon.body}
+    </svg>
+  `;
 }
 
 function render(): void {
-  const theme = getThemeById(draftSettings.themeId);
-
   appRoot.innerHTML = `
-    <div class="bg-[#5ea6cf]">
-      <div class="relative h-[218px] w-[304px] bg-[#5ea6cf] shadow-[inset_0_0_0_3px_#000]">
-        <div
-          aria-hidden="true"
-          class="pointer-events-none absolute bottom-[14px] left-1/2 h-[20%] w-[78%] -translate-x-1/2 rounded-[999px] bg-black"
-        ></div>
+    <div class="popup-shell">
+      <div class="popup-panel">
+        <div class="popup-tab-rail" role="tablist" aria-label="Popup tabs">
+          ${POPUP_TABS.map((tab) => `
+            <button
+              type="button"
+              class="popup-tab ${tab.id === activeTab ? 'is-active' : ''}"
+              data-tab-id="${tab.id}"
+              role="tab"
+              aria-label="${tab.label}"
+              aria-selected="${tab.id === activeTab}"
+              title="${tab.label}"
+            >
+              ${iconMarkup(tab.icon)}
+            </button>
+          `).join('')}
+        </div>
+
+        <div aria-hidden="true" class="popup-pill"></div>
       </div>
     </div>
   `;
@@ -65,78 +82,16 @@ function render(): void {
   bindEvents();
 }
 
-async function sendMessage<T>(message: unknown): Promise<RuntimeResponse<T>> {
-  return chrome.runtime.sendMessage(message) as Promise<RuntimeResponse<T>>;
-}
-
-async function persistSettings(nextSettings: ClerraSettings): Promise<void> {
-  statusMessage = 'Saving…';
-  render();
-  const response = await sendMessage<UpdateSettingsResponse>({ type: 'clerra/updateSettings', payload: nextSettings });
-
-  if (!response.ok) {
-    statusMessage = response.error;
-    render();
-    return;
-  }
-
-  draftSettings = response.data.settings;
-  statusMessage = 'Saved.';
-  render();
-}
-
-function readDraftFromForm(): ClerraSettings {
-  const apiKey = (document.querySelector<HTMLInputElement>('#geminiApiKey')?.value ?? '').trim();
-  const playlistUrl = (document.querySelector<HTMLTextAreaElement>('#playlistUrl')?.value ?? '').trim();
-  const nightMode = document.querySelector<HTMLInputElement>('#nightMode')?.checked ?? false;
-  const musicEnabled = document.querySelector<HTMLInputElement>('#musicEnabled')?.checked ?? false;
-
-  return {
-    ...draftSettings,
-    geminiApiKey: apiKey,
-    playlistUrl,
-    nightMode,
-    musicEnabled
-  };
-}
-
 function bindEvents(): void {
-  document.querySelector<HTMLButtonElement>('#saveSettings')?.addEventListener('click', async () => {
-    await persistSettings(readDraftFromForm());
-  });
-
-  document.querySelector<HTMLButtonElement>('#openOverlay')?.addEventListener('click', async () => {
-    await persistSettings(readDraftFromForm());
-    const response = await sendMessage<ToggleOverlayResponse>({ type: 'clerra/toggleOverlay', payload: { forceOpen: true } });
-    statusMessage = response.ok ? 'Overlay opened.' : response.error;
-    render();
-    window.close();
-  });
-
-  document.querySelector<HTMLButtonElement>('#musicToggle')?.addEventListener('click', async () => {
-    draftSettings = { ...readDraftFromForm(), musicEnabled: !readDraftFromForm().musicEnabled };
-    await persistSettings(draftSettings);
-  });
-
-  document.querySelector<HTMLButtonElement>('#nightToggle')?.addEventListener('click', async () => {
-    draftSettings = { ...readDraftFromForm(), nightMode: !readDraftFromForm().nightMode };
-    await persistSettings(draftSettings);
-  });
-
-  document.querySelector<HTMLButtonElement>('#themeFocus')?.addEventListener('click', () => {
-    document.querySelector<HTMLElement>('#themeSection')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  });
-
-  document.querySelectorAll<HTMLButtonElement>('[data-theme-id]').forEach((button) => {
+  document.querySelectorAll<HTMLButtonElement>('[data-tab-id]').forEach((button) => {
     button.addEventListener('click', () => {
-      draftSettings = { ...readDraftFromForm(), themeId: button.dataset.themeId ?? draftSettings.themeId };
-      render();
-    });
-  });
+      const nextTab = button.dataset.tabId as PopupTabId | undefined;
 
-  document.querySelectorAll<HTMLButtonElement>('[data-accent-id]').forEach((button) => {
-    button.addEventListener('click', () => {
-      draftSettings = { ...readDraftFromForm(), accentId: button.dataset.accentId ?? draftSettings.accentId };
+      if (!nextTab || nextTab === activeTab) {
+        return;
+      }
+
+      activeTab = nextTab;
       render();
     });
   });
