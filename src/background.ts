@@ -1,5 +1,5 @@
 import { buildCacheKey } from './lib/cache';
-import { type ClerraMessage, type ProcessModeMessage, type ProcessModeResponse, type RuntimeResponse, type ToggleMusicResponse, type ToggleOverlayResponse, type UpdateSettingsResponse } from './lib/messages';
+import { type ClerraMessage, type ProcessModeMessage, type ProcessModeResponse, type RuntimeResponse, type ToggleMusicResponse, type ToggleOverlayResponse, type UpdateSettingsResponse, type ValidateGeminiApiKeyResponse } from './lib/messages';
 import { buildPrompt, GEMINI_MODEL } from './lib/prompts';
 import { DEFAULT_SETTINGS, loadSettings, normalizeSettings, saveSettings, SETTINGS_KEYS } from './lib/settings';
 import type { PageExtraction, ProcessedContent } from './lib/types';
@@ -32,13 +32,21 @@ async function sendToActiveTab(message: ClerraMessage): Promise<RuntimeResponse<
   return response ?? success({ visible: false });
 }
 
-function parseApiError(payload: unknown): string {
+function parseApiError(payload: unknown, fallback = 'Gemini request failed.'): string {
   if (typeof payload !== 'object' || payload === null) {
-    return 'Gemini request failed.';
+    return fallback;
   }
 
-  const maybeError = payload as { error?: { message?: string } };
-  return maybeError.error?.message ?? 'Gemini request failed.';
+  const maybeError = payload as { error?: { message?: string }; message?: string };
+  return maybeError.error?.message ?? maybeError.message ?? fallback;
+}
+
+async function readApiPayload(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
 }
 
 async function callGemini(page: PageExtraction, apiKey: string, mode: ProcessModeMessage['payload']['mode']): Promise<ProcessedContent> {
@@ -59,13 +67,14 @@ async function callGemini(page: PageExtraction, apiKey: string, mode: ProcessMod
     }
   );
 
-  const payload = await response.json();
+  const payload = await readApiPayload(response);
 
   if (!response.ok) {
     throw new Error(parseApiError(payload));
   }
 
-  const markdown = payload.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? '').join('').trim();
+  const apiPayload = payload as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+  const markdown = apiPayload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('').trim();
 
   if (!markdown) {
     throw new Error('Gemini returned an empty response.');
@@ -129,6 +138,25 @@ async function toggleMusic(enabled: boolean | undefined, openExternal: boolean |
   return { musicEnabled: nextEnabled };
 }
 
+function isLikelyGeminiApiKey(apiKey: string): boolean {
+  return /^AIza[0-9A-Za-z_-]{20,}$/.test(apiKey);
+}
+
+async function validateGeminiApiKey(apiKey: string): Promise<void> {
+  if (!isLikelyGeminiApiKey(apiKey)) {
+    throw new Error('Invalid key');
+  }
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}?key=${encodeURIComponent(apiKey)}`
+  );
+  const payload = await readApiPayload(response);
+
+  if (!response.ok) {
+    throw new Error(parseApiError(payload, 'Unable to validate Gemini API key.'));
+  }
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   void ensureDefaultSettings();
 });
@@ -163,6 +191,12 @@ chrome.runtime.onMessage.addListener((message: ClerraMessage, sender, sendRespon
       if (message.type === 'clerra/toggleMusic') {
         const music = await toggleMusic(message.payload.enabled, message.payload.openExternal, message.payload.playlistUrl);
         sendResponse(success<ToggleMusicResponse>(music));
+        return;
+      }
+
+      if (message.type === 'clerra/validateGeminiApiKey') {
+        await validateGeminiApiKey(message.payload.apiKey);
+        sendResponse(success<ValidateGeminiApiKeyResponse>({ valid: true }));
         return;
       }
 

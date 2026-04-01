@@ -41,6 +41,107 @@
     pointer-events: none;
   }
 
+  .settings-view {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .settings-title {
+    margin: 0;
+    max-width: 172px;
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.18;
+    text-align: center;
+    color: #fff;
+  }
+
+  .settings-form {
+    width: 232px;
+    margin: 0;
+  }
+
+  .settings-input-shell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: #fff;
+    color: #d3d3d3;
+    box-sizing: border-box;
+  }
+
+  .settings-input-shell .popup-tab__icon {
+    width: 18px;
+    height: 18px;
+    flex: none;
+  }
+
+  .settings-input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #949494;
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  .settings-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #b9b9b9;
+    flex: none;
+  }
+
+  .settings-submit .popup-tab__icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .settings-input:disabled {
+    opacity: 1;
+    -webkit-text-fill-color: #949494;
+  }
+
+  .settings-help {
+    margin-top: 0;
+    font-size: 13px;
+    font-weight: 300;
+    color: #fff;
+    text-decoration: none;
+    text-align: center;
+  }
+
+  .settings-help--error {
+    color: #fff;
+  }
+
+  .settings-help--button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
   .popup-tab-rail {
     position: absolute;
     top: 50%;
@@ -90,7 +191,7 @@
     bottom: 18px;
     left: 50%;
     z-index: 1;
-    width: 176px;
+    width: 214px;
     height: 36px;
     border-radius: 999px;
     background: #000;

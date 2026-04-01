@@ -29,7 +29,14 @@ export interface ToggleMusicMessage {
   };
 }
 
-export type ClerraMessage = ToggleOverlayMessage | ProcessModeMessage | UpdateSettingsMessage | ToggleMusicMessage;
+export interface ValidateGeminiApiKeyMessage {
+  type: 'clerra/validateGeminiApiKey';
+  payload: {
+    apiKey: string;
+  };
+}
+
+export type ClerraMessage = ToggleOverlayMessage | ProcessModeMessage | UpdateSettingsMessage | ToggleMusicMessage | ValidateGeminiApiKeyMessage;
 
 export interface SuccessResponse<T> {
   ok: true;
@@ -55,6 +62,10 @@ export interface UpdateSettingsResponse {
 
 export interface ToggleMusicResponse {
   musicEnabled: boolean;
+}
+
+export interface ValidateGeminiApiKeyResponse {
+  valid: boolean;
 }
 
 export function isRuntimeError<T>(response: RuntimeResponse<T>): response is ErrorResponse {
