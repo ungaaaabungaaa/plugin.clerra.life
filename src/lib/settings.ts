@@ -4,7 +4,7 @@ import type { ClerraSettings } from './types';
 export const DEFAULT_SETTINGS: ClerraSettings = {
   geminiApiKey: '',
   themeId: THEMES[0].id,
-  accentId: ACCENTS[0].id,
+  accentId: 'ocean',
   nightMode: false,
   playlistUrl: 'https://www.youtube.com/playlist?list=PLDisKgcnAC4Q2r6o-2Zf6amO5Ma9wJl3v',
   musicEnabled: true

@@ -1,5 +1,6 @@
 import './popup.css';
-import { loadSettings } from '../lib/settings';
+import { ACCENTS, getAccentById, getThemeById, THEMES } from '../lib/themes';
+import { loadSettings, normalizeSettings } from '../lib/settings';
 import type { ClerraSettings } from '../lib/types';
 import { TAB_ICONS, type InlineIcon } from './tab-icons';
 import type { RuntimeResponse, UpdateSettingsResponse, ValidateGeminiApiKeyResponse } from '../lib/messages';
@@ -17,6 +18,7 @@ let draftSettings: ClerraSettings;
 let pendingApiKey = '';
 let apiKeyError = '';
 let validatingApiKey = false;
+let settingsSaveVersion = 0;
 
 type PopupTabId = 'music' | 'theme' | 'settings';
 
@@ -80,10 +82,88 @@ function sendMessage<T>(message: unknown): Promise<RuntimeResponse<T>> {
   return chrome.runtime.sendMessage(message) as Promise<RuntimeResponse<T>>;
 }
 
+function currentThemeIndex(): number {
+  const index = THEMES.findIndex((theme) => theme.id === draftSettings.themeId);
+  return index === -1 ? 0 : index;
+}
+
+async function saveDraftSettings(patch: Partial<ClerraSettings>): Promise<void> {
+  const nextVersion = settingsSaveVersion + 1;
+  settingsSaveVersion = nextVersion;
+  draftSettings = { ...draftSettings, ...patch };
+  render();
+
+  const response = await sendMessage<UpdateSettingsResponse>({
+    type: 'clerra/updateSettings',
+    payload: patch
+  });
+
+  if (nextVersion !== settingsSaveVersion) {
+    return;
+  }
+
+  if (!response.ok) {
+    apiKeyError = response.error;
+    render();
+    return;
+  }
+
+  draftSettings = response.data.settings;
+  apiKeyError = '';
+  render();
+}
+
+function renderThemeView(): string {
+  const selectedTheme = getThemeById(draftSettings.themeId);
+  const selectedAccent = getAccentById(draftSettings.accentId);
+  const themeIndex = currentThemeIndex();
+  const previousTheme = THEMES[(themeIndex - 1 + THEMES.length) % THEMES.length];
+  const nextTheme = THEMES[(themeIndex + 1) % THEMES.length];
+
+  return `
+    <div class="theme-view">
+      <div
+        class="theme-screen"
+        style="background:${selectedTheme.gradient};--theme-accent:${selectedAccent.color}"
+      >
+        <div class="theme-screen__grain"></div>
+        <div class="theme-swatches" aria-label="Theme colors">
+          ${ACCENTS.map((accent) => `
+            <button
+              type="button"
+              class="theme-dot ${accent.id === draftSettings.accentId ? 'is-active' : ''}"
+              data-accent-id="${accent.id}"
+              title="${accent.name}"
+              aria-label="${accent.name}"
+              style="background:${accent.color}"
+            ></button>
+          `).join('')}
+        </div>
+        <div class="theme-nav">
+          <button
+            type="button"
+            class="theme-nav__button"
+            data-theme-id="${previousTheme.id}"
+            aria-label="Previous gradient"
+            title="Previous gradient"
+          >‹</button>
+          <button
+            type="button"
+            class="theme-nav__button"
+            data-theme-id="${nextTheme.id}"
+            aria-label="Next gradient"
+            title="Next gradient"
+          >›</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderSettingsView(): string {
   const hasStoredKey = Boolean(draftSettings.geminiApiKey);
   const inputValue = hasStoredKey ? maskApiKey(draftSettings.geminiApiKey) : pendingApiKey;
-  const titleMarkup = hasStoredKey ? '' : '<h1 class="settings-title">Add Your Gemini API Key</h1>';
+  const titleMarkup = hasStoredKey ? '' : '<h1 class="settings-title">Add Gemini API Key</h1>';
   const helperMarkup = hasStoredKey
     ? '<button type="button" class="settings-help settings-help--button" id="removeApiKey">Remove key</button>'
     : apiKeyError
@@ -118,18 +198,26 @@ function renderSettingsView(): string {
 }
 
 function renderPanelContent(): string {
+  if (activeTab === 'theme') {
+    return renderThemeView();
+  }
+
   if (activeTab === 'settings') {
     return renderSettingsView();
   }
 
-  return '<div aria-hidden="true" class="popup-pill"></div>';
+  return '';
 }
 
 function render(): void {
+  const selectedAccent = getAccentById(draftSettings?.accentId ?? 'ocean');
+  const showPill = activeTab !== 'settings';
+
   appRoot.innerHTML = `
     <div class="popup-shell">
-      <div class="popup-panel">
+      <div class="popup-panel" style="--popup-accent:${selectedAccent.color}">
         ${renderPanelContent()}
+        ${showPill ? '<div aria-hidden="true" class="popup-pill"></div>' : ''}
         <div class="popup-tab-rail" role="tablist" aria-label="Popup tabs">
           ${POPUP_TABS.map((tab) => `
             <button
@@ -233,6 +321,25 @@ function bindEvents(): void {
     });
   });
 
+  document.querySelector<HTMLElement>('.theme-view')?.addEventListener('click', (event) => {
+    const target = (event.target as HTMLElement).closest<HTMLElement>('[data-accent-id], [data-theme-id]');
+
+    if (!target) {
+      return;
+    }
+
+    const accentId = target.dataset.accentId;
+    if (accentId && accentId !== draftSettings.accentId) {
+      void saveDraftSettings({ accentId });
+      return;
+    }
+
+    const themeId = target.dataset.themeId;
+    if (themeId && themeId !== draftSettings.themeId) {
+      void saveDraftSettings({ themeId });
+    }
+  });
+
   const apiKeyInput = document.querySelector<HTMLInputElement>('#geminiApiKeyInput');
 
   if (apiKeyInput && !draftSettings.geminiApiKey) {
@@ -269,8 +376,10 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 
   draftSettings = {
-    ...draftSettings,
-    ...Object.fromEntries(Object.entries(changes).map(([key, value]) => [key, value.newValue]))
+    ...normalizeSettings({
+      ...draftSettings,
+      ...Object.fromEntries(Object.entries(changes).map(([key, value]) => [key, value.newValue]))
+    })
   };
   render();
 });

@@ -29,7 +29,12 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #5ea6cf;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--popup-accent, #29a6d2) 84%, white 16%),
+        color-mix(in srgb, var(--popup-accent, #29a6d2) 72%, black 28%)
+      );
     box-shadow: inset 0 0 0 3px #000;
   }
 
@@ -52,6 +57,98 @@
     gap: 10px;
     padding: 0;
     box-sizing: border-box;
+  }
+
+  .theme-view {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    padding: 18px 42px 64px 12px;
+    box-sizing: border-box;
+  }
+
+  .theme-screen {
+    width: 100%;
+    position: relative;
+    height: 146px;
+    border: 3px solid #000;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 1px 0 rgb(255 255 255 / 0.1);
+  }
+
+  .theme-screen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--theme-accent, #29a6d2) 46%, transparent) 0%, transparent 38%),
+      linear-gradient(180deg, color-mix(in srgb, var(--theme-accent, #29a6d2) 18%, transparent), transparent 52%);
+    mix-blend-mode: screen;
+    opacity: 0.95;
+    pointer-events: none;
+  }
+
+  .theme-screen__grain {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.08), transparent 58%),
+      radial-gradient(circle at 22% 20%, rgb(255 255 255 / 0.06), transparent 26%),
+      radial-gradient(circle at 80% 75%, rgb(0 0 0 / 0.18), transparent 28%);
+    opacity: 0.9;
+    pointer-events: none;
+  }
+
+  .theme-swatches {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    transform: translateY(-50%);
+  }
+
+  .theme-dot {
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: 3px solid #000;
+    border-radius: 999px;
+    box-sizing: border-box;
+    box-shadow: none;
+  }
+
+  .theme-dot.is-active {
+    transform: scale(1.06);
+  }
+
+  .theme-nav {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    z-index: 1;
+    display: flex;
+    gap: 2px;
+    transform: translateX(-50%);
+  }
+
+  .theme-nav__button {
+    width: 18px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: color-mix(in srgb, white 72%, var(--theme-accent, #29a6d2) 28%);
+    font-size: 28px;
+    line-height: 0.65;
+    text-shadow: 0 1px 1px rgb(0 0 0 / 0.65);
   }
 
   .settings-title {
@@ -188,9 +285,9 @@
 
   .popup-pill {
     position: absolute;
-    bottom: 18px;
+    bottom: 12px;
     left: 50%;
-    z-index: 1;
+    z-index: 2;
     width: 214px;
     height: 36px;
     border-radius: 999px;
