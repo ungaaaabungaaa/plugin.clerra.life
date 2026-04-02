@@ -1,3 +1,5 @@
+import gradientPresets from './gradients.json';
+
 export interface ThemePreset {
   id: string;
   name: string;
@@ -10,18 +12,28 @@ export interface AccentPreset {
   color: string;
 }
 
-export const THEMES: ThemePreset[] = [
-  {
-    id: 'aurora-haze',
-    name: 'Aurora Haze',
-    gradient: 'radial-gradient(circle at 62% 22%, rgb(128 233 92 / 0.88) 0%, rgb(88 181 114 / 0.58) 26%, rgb(28 68 87 / 0.82) 72%, #161739 100%)'
-  },
-  {
-    id: 'sunset-drive',
-    name: 'Sunset Drive',
-    gradient: 'radial-gradient(circle at 24% 18%, rgb(255 210 91 / 0.88) 0%, rgb(246 121 85 / 0.62) 34%, rgb(134 64 117 / 0.84) 68%, #1a1832 100%)'
-  }
-];
+type GradientPreset = {
+  name: string;
+  colors: string[];
+};
+
+function slugifyThemeName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function buildLinearGradient(colors: string[]): string {
+  return `linear-gradient(135deg, ${colors.join(', ')})`;
+}
+
+export const THEMES: ThemePreset[] = (gradientPresets as GradientPreset[]).map((preset) => ({
+  id: slugifyThemeName(preset.name),
+  name: preset.name,
+  gradient: buildLinearGradient(preset.colors)
+}));
 
 export const ACCENTS: AccentPreset[] = [
   { id: 'blush', name: 'Blush', color: '#F79BB4' },
