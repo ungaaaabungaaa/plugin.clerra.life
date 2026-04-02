@@ -1,5 +1,5 @@
 import './popup.css';
-import { getAccentById, getThemeById, THEMES } from '../lib/themes';
+import { ACCENTS, getAccentById, getThemeById, THEMES } from '../lib/themes';
 import { loadSettings, normalizeSettings } from '../lib/settings';
 import type { ClerraSettings } from '../lib/types';
 import { TAB_ICONS, type InlineIcon } from './tab-icons';
@@ -87,20 +87,6 @@ function currentThemeIndex(): number {
   return index === -1 ? 0 : index;
 }
 
-function visibleThemeSwatches(themeIndex: number, total = 6): typeof THEMES {
-  if (THEMES.length <= total) {
-    return THEMES;
-  }
-
-  const halfWindow = Math.floor(total / 2);
-  const startIndex = themeIndex - halfWindow;
-
-  return Array.from({ length: total }, (_, offset) => {
-    const index = (startIndex + offset + THEMES.length) % THEMES.length;
-    return THEMES[index];
-  });
-}
-
 async function saveDraftSettings(patch: Partial<ClerraSettings>): Promise<void> {
   const nextVersion = settingsSaveVersion + 1;
   settingsSaveVersion = nextVersion;
@@ -129,27 +115,27 @@ async function saveDraftSettings(patch: Partial<ClerraSettings>): Promise<void> 
 
 function renderThemeView(): string {
   const selectedTheme = getThemeById(draftSettings.themeId);
+  const selectedAccent = getAccentById(draftSettings.accentId);
   const themeIndex = currentThemeIndex();
   const previousTheme = THEMES[(themeIndex - 1 + THEMES.length) % THEMES.length];
   const nextTheme = THEMES[(themeIndex + 1) % THEMES.length];
-  const themeSwatches = visibleThemeSwatches(themeIndex);
 
   return `
     <div class="theme-view">
       <div
         class="theme-screen"
-        style="background:${selectedTheme.gradient}"
+        style="background:${selectedTheme.gradient};--theme-accent:${selectedAccent.color};"
       >
         <div class="theme-screen__grain"></div>
-        <div class="theme-swatches" aria-label="Gradient list">
-          ${themeSwatches.map((theme) => `
+        <div class="theme-swatches" aria-label="Accent colors">
+          ${ACCENTS.map((accent) => `
             <button
               type="button"
-              class="theme-dot ${theme.id === draftSettings.themeId ? 'is-active' : ''}"
-              data-theme-id="${theme.id}"
-              title="${theme.name}"
-              aria-label="${theme.name}"
-              style="background:${theme.gradient}"
+              class="theme-dot ${accent.id === draftSettings.accentId ? 'is-active' : ''}"
+              data-accent-id="${accent.id}"
+              title="${accent.name}"
+              aria-label="${accent.name}"
+              style="--swatch-color:${accent.color}"
             ></button>
           `).join('')}
         </div>
@@ -336,6 +322,18 @@ function bindEvents(): void {
   });
 
   document.querySelector<HTMLElement>('.theme-view')?.addEventListener('click', (event) => {
+    const accentTarget = (event.target as HTMLElement).closest<HTMLElement>('[data-accent-id]');
+
+    if (accentTarget) {
+      const accentId = accentTarget.dataset.accentId;
+
+      if (accentId && accentId !== draftSettings.accentId) {
+        void saveDraftSettings({ accentId });
+      }
+
+      return;
+    }
+
     const target = (event.target as HTMLElement).closest<HTMLElement>('[data-theme-id]');
 
     if (!target) {

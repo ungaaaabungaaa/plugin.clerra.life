@@ -121,7 +121,7 @@
     border: 3px solid #000;
     border-radius: 999px;
     box-sizing: border-box;
-    background-color: transparent;
+    background-color: var(--swatch-color);
     background-image: none;
     box-shadow: none;
   }
