@@ -82,17 +82,18 @@
     content: "";
     position: absolute;
     inset: 0;
+    z-index: 0;
     background:
-      radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--theme-accent, #29a6d2) 46%, transparent) 0%, transparent 38%),
-      linear-gradient(180deg, color-mix(in srgb, var(--theme-accent, #29a6d2) 18%, transparent), transparent 52%);
-    mix-blend-mode: screen;
-    opacity: 0.95;
+      radial-gradient(circle at 18% 18%, rgb(255 255 255 / 0.15) 0%, transparent 38%),
+      linear-gradient(180deg, rgb(255 255 255 / 0.1), transparent 52%);
+    opacity: 0.55;
     pointer-events: none;
   }
 
   .theme-screen__grain {
     position: absolute;
     inset: 0;
+    z-index: 0;
     background:
       radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.08), transparent 58%),
       radial-gradient(circle at 22% 20%, rgb(255 255 255 / 0.06), transparent 26%),
@@ -105,7 +106,7 @@
     position: absolute;
     top: 50%;
     right: 6px;
-    z-index: 1;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -113,12 +114,15 @@
   }
 
   .theme-dot {
+    appearance: none;
     width: 16px;
     height: 16px;
     padding: 0;
     border: 3px solid #000;
     border-radius: 999px;
     box-sizing: border-box;
+    background-color: transparent;
+    background-image: none;
     box-shadow: none;
   }
 
@@ -130,7 +134,7 @@
     position: absolute;
     bottom: 8px;
     left: 50%;
-    z-index: 1;
+    z-index: 2;
     display: flex;
     gap: 2px;
     transform: translateX(-50%);
@@ -142,10 +146,10 @@
     padding: 0;
     border: 0;
     background: transparent;
-    color: color-mix(in srgb, white 72%, var(--theme-accent, #29a6d2) 28%);
+    color: #000;
     font-size: 28px;
     line-height: 0.65;
-    text-shadow: 0 1px 1px rgb(0 0 0 / 0.65);
+    text-shadow: none;
   }
 
   .settings-title {
