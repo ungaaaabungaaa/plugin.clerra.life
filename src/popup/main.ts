@@ -209,6 +209,31 @@ function renderPanelContent(): string {
   return '';
 }
 
+function renderBottomPill(): string {
+  return `
+    <div class="popup-pill">
+      <div class="popup-pill__icon" aria-hidden="true">
+        ${iconMarkup(TAB_ICONS.peace)}
+      </div>
+      <label class="popup-pill__slider" for="popupModeSlider">
+        <input
+          id="popupModeSlider"
+          class="popup-pill__range"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value="18"
+          aria-label="Popup mode slider"
+        />
+      </label>
+      <div class="popup-pill__icon popup-pill__icon--lab" aria-hidden="true">
+        ${iconMarkup(TAB_ICONS.lab)}
+      </div>
+    </div>
+  `;
+}
+
 function render(): void {
   const selectedAccent = getAccentById(draftSettings?.accentId ?? 'ocean');
   const showPill = activeTab !== 'settings';
@@ -217,7 +242,7 @@ function render(): void {
     <div class="popup-shell">
       <div class="popup-panel" style="--popup-accent:${selectedAccent.color}">
         ${renderPanelContent()}
-        ${showPill ? '<div aria-hidden="true" class="popup-pill"></div>' : ''}
+        ${showPill ? renderBottomPill() : ''}
         <div class="popup-tab-rail" role="tablist" aria-label="Popup tabs">
           ${POPUP_TABS.map((tab) => `
             <button
