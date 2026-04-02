@@ -21,6 +21,41 @@ function escapeAttribute(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
+type InlineIcon = {
+  body: string;
+  width: number;
+  height: number;
+};
+
+// Icon bodies follow the same inline-Iconify pattern used in the popup.
+const SLIDER_ICONS = {
+  peace: {
+    width: 24,
+    height: 24,
+    body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M12 3.25a8.75 8.75 0 1 0 0 17.5a8.75 8.75 0 0 0 0-17.5m0 .5v16.5m0-8.3l-5.1 5.1m5.1-5.1l5.1 5.1"/>'
+  },
+  lab: {
+    width: 20,
+    height: 20,
+    body: '<path fill="currentColor" d="M7.23 2.5a.75.75 0 0 0 0 1.5h.27v3.74L4.38 13.2A3.75 3.75 0 0 0 7.62 19h4.76a3.75 3.75 0 0 0 3.24-5.8L12.5 7.74V4h.27a.75.75 0 0 0 0-1.5Zm1.77 1.5h2v3.94l3.33 5.73A2.25 2.25 0 0 1 12.38 17.5H7.62a2.25 2.25 0 0 1-1.95-3.48L9 7.94zm-.94 7.08a.75.75 0 0 0-.65.38l-.87 1.5a.75.75 0 0 0 .65 1.12h5.62a.75.75 0 0 0 .65-1.12l-.87-1.5a.75.75 0 0 0-.65-.38z"/>'
+  }
+} satisfies Record<string, InlineIcon>;
+
+function iconMarkup(icon: InlineIcon, className = ''): string {
+  const svgClass = className ? ` class="${className}"` : '';
+
+  return `
+    <svg
+      ${svgClass}
+      viewBox="0 0 ${icon.width} ${icon.height}"
+      aria-hidden="true"
+      focusable="false"
+    >
+      ${icon.body}
+    </svg>
+  `;
+}
+
 class ClerraOverlay {
   private settings: ClerraSettings = DEFAULT_SETTINGS;
   private visible = false;
@@ -95,12 +130,12 @@ class ClerraOverlay {
         </div>
 
         <div class="clerra-slider-pill">
-          <div class="clerra-slider-icon">☮</div>
+          <div class="clerra-slider-icon">${iconMarkup(SLIDER_ICONS.peace, 'clerra-slider-icon-svg')}</div>
           <div class="clerra-slider-shell">
             <input class="clerra-range" id="clerraSlider" type="range" min="0" max="100" step="1" value="50" aria-label="Clerra mode slider" />
             <div class="clerra-slider-caption" id="clerraSliderCaption">Original</div>
           </div>
-          <div class="clerra-slider-icon">⚗</div>
+          <div class="clerra-slider-icon">${iconMarkup(SLIDER_ICONS.lab, 'clerra-slider-icon-svg')}</div>
         </div>
       </div>
     `;

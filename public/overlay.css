@@ -399,13 +399,15 @@
 .clerra-slider-pill {
   justify-self: center;
   width: min(460px, calc(100vw - 72px));
-  padding: 18px 24px;
+  padding: 18px 26px;
   border-radius: 999px;
-  background: var(--clerra-theme-gradient);
-  box-shadow: var(--clerra-shadow);
+  background: #050505;
+  box-shadow:
+    0 22px 44px rgba(3, 6, 10, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   pointer-events: auto;
   transform: translateY(10px) scale(0.98);
   opacity: 0;
@@ -426,7 +428,7 @@
 .clerra-range::-webkit-slider-runnable-track {
   height: 8px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.34);
+  background: rgba(255,255,255,0.88);
 }
 
 .clerra-range::-webkit-slider-thumb {
@@ -436,14 +438,16 @@
   margin-top: -13px;
   border-radius: 50%;
   border: 0;
-  background: white;
-  box-shadow: 0 8px 18px rgba(10,10,14,0.18);
+  background: #2da8d8;
+  box-shadow:
+    0 8px 18px rgba(5, 10, 16, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .clerra-range::-moz-range-track {
   height: 8px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.34);
+  background: rgba(255,255,255,0.88);
 }
 
 .clerra-range::-moz-range-thumb {
@@ -451,12 +455,23 @@
   height: 34px;
   border: 0;
   border-radius: 50%;
-  background: white;
+  background: #2da8d8;
+  box-shadow:
+    0 8px 18px rgba(5, 10, 16, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .clerra-slider-icon {
-  font-size: 32px;
-  line-height: 1;
+  width: 28px;
+  height: 28px;
+  color: rgba(255, 255, 255, 0.96);
+  flex: 0 0 auto;
+}
+
+.clerra-slider-icon-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .clerra-slider-caption {
