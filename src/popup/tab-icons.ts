@@ -6,7 +6,7 @@ export type InlineIcon = {
 
 // Icon bodies sourced from Iconify:
 // mage:music-fill, ic:baseline-dark-mode, icon-park-solid:setting-one, mdi:key,
-// mdi:peace, entypo:lab-flask
+// mdi:peace, entypo:lab-flask, mdi:chevron-left, mdi:chevron-right, mdi:play, mdi:pause
 export const TAB_ICONS = {
   music: {
     width: 24,
@@ -32,6 +32,26 @@ export const TAB_ICONS = {
     width: 24,
     height: 24,
     body: '<path fill="currentColor" d="M12.7 17.3a1 1 0 0 1-1.4-1.4l2.6-2.6H5a1 1 0 1 1 0-2h8.9l-2.6-2.6a1 1 0 0 1 1.4-1.4l4.3 4.3a1 1 0 0 1 0 1.4z"/>'
+  },
+  previous: {
+    width: 24,
+    height: 24,
+    body: '<path fill="currentColor" d="M15.41 7.41L14 6l-6 6l6 6l1.41-1.41L10.83 12z"/>'
+  },
+  next: {
+    width: 24,
+    height: 24,
+    body: '<path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/>'
+  },
+  play: {
+    width: 24,
+    height: 24,
+    body: '<path fill="currentColor" d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18a1 1 0 0 0 0-1.68L9.54 5.98A1 1 0 0 0 8 6.82"/>'
+  },
+  pause: {
+    width: 24,
+    height: 24,
+    body: '<path fill="currentColor" d="M6 5h4v14H6zm8 0h4v14h-4z"/>'
   },
   peace: {
     width: 24,

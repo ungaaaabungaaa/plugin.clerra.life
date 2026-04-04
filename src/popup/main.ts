@@ -2,6 +2,7 @@ import './popup.css';
 import { ACCENTS, getAccentById, getThemeById, THEMES } from '../lib/themes';
 import { loadSettings, normalizeSettings } from '../lib/settings';
 import type { ClerraSettings } from '../lib/types';
+import { POPUP_MUSIC_TRACKS } from './music';
 import { TAB_ICONS, type InlineIcon } from './tab-icons';
 import type { RuntimeResponse, UpdateSettingsResponse, ValidateGeminiApiKeyResponse } from '../lib/messages';
 
@@ -19,6 +20,12 @@ let pendingApiKey = '';
 let apiKeyError = '';
 let validatingApiKey = false;
 let settingsSaveVersion = 0;
+let activeTrackIndex = 0;
+let audioReady = false;
+let isTrackPlaying = false;
+
+const popupAudio = new Audio();
+popupAudio.preload = 'metadata';
 
 type PopupTabId = 'music' | 'theme' | 'settings';
 
@@ -160,6 +167,105 @@ function renderThemeView(): string {
   `;
 }
 
+function hasPlayableTracks(): boolean {
+  return POPUP_MUSIC_TRACKS.some((track) => track.audioUrl.trim().length > 0);
+}
+
+function getTrack(index = activeTrackIndex) {
+  return POPUP_MUSIC_TRACKS[index] ?? POPUP_MUSIC_TRACKS[0] ?? null;
+}
+
+function getTrackArtwork(): string {
+  const track = getTrack();
+  return track?.thumbnailUrl.trim() || chrome.runtime.getURL('background.png');
+}
+
+function ensureTrackIndex(): void {
+  if (!POPUP_MUSIC_TRACKS.length) {
+    activeTrackIndex = 0;
+    return;
+  }
+
+  if (activeTrackIndex >= POPUP_MUSIC_TRACKS.length || activeTrackIndex < 0) {
+    activeTrackIndex = 0;
+  }
+}
+
+function syncAudioSource(): void {
+  ensureTrackIndex();
+  const track = getTrack();
+
+  if (!track?.audioUrl.trim()) {
+    popupAudio.pause();
+    popupAudio.removeAttribute('src');
+    popupAudio.load();
+    audioReady = false;
+    isTrackPlaying = false;
+    return;
+  }
+
+  if (popupAudio.src === track.audioUrl) {
+    return;
+  }
+
+  popupAudio.src = track.audioUrl;
+  popupAudio.load();
+  audioReady = true;
+  isTrackPlaying = false;
+}
+
+function renderMusicView(): string {
+  ensureTrackIndex();
+  const track = getTrack();
+  const hasTracks = POPUP_MUSIC_TRACKS.length > 0;
+  const canPlay = hasPlayableTracks() && Boolean(track?.audioUrl.trim());
+  const artworkUrl = escapeAttribute(getTrackArtwork());
+  const title = escapeAttribute(track?.title ?? 'Add a track');
+
+  return `
+    <div class="music-view">
+      <div class="music-screen">
+        <div class="music-screen__grain"></div>
+        <div class="music-screen__artwork-wrap">
+          <img class="music-screen__artwork" src="${artworkUrl}" alt="${title}" />
+        </div>
+        <div class="music-screen__controls" aria-label="Music controls">
+          <button
+            type="button"
+            class="music-control"
+            data-action="music-prev"
+            aria-label="Previous track"
+            title="Previous track"
+            ${hasTracks ? '' : 'disabled'}
+          >
+            ${iconMarkup(TAB_ICONS.previous)}
+          </button>
+          <button
+            type="button"
+            class="music-control music-control--primary"
+            data-action="music-toggle"
+            aria-label="${isTrackPlaying ? 'Pause track' : 'Play track'}"
+            title="${isTrackPlaying ? 'Pause track' : 'Play track'}"
+            ${canPlay ? '' : 'disabled'}
+          >
+            ${iconMarkup(isTrackPlaying ? TAB_ICONS.pause : TAB_ICONS.play)}
+          </button>
+          <button
+            type="button"
+            class="music-control"
+            data-action="music-next"
+            aria-label="Next track"
+            title="Next track"
+            ${hasTracks ? '' : 'disabled'}
+          >
+            ${iconMarkup(TAB_ICONS.next)}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderSettingsView(): string {
   const hasStoredKey = Boolean(draftSettings.geminiApiKey);
   const inputValue = hasStoredKey ? maskApiKey(draftSettings.geminiApiKey) : pendingApiKey;
@@ -198,6 +304,10 @@ function renderSettingsView(): string {
 }
 
 function renderPanelContent(): string {
+  if (activeTab === 'music') {
+    return renderMusicView();
+  }
+
   if (activeTab === 'theme') {
     return renderThemeView();
   }
@@ -263,6 +373,54 @@ function render(): void {
   `;
 
   bindEvents();
+}
+
+async function playCurrentTrack(): Promise<void> {
+  const track = getTrack();
+
+  if (!track?.audioUrl.trim()) {
+    isTrackPlaying = false;
+    render();
+    return;
+  }
+
+  syncAudioSource();
+
+  try {
+    await popupAudio.play();
+    isTrackPlaying = true;
+  } catch {
+    isTrackPlaying = false;
+  }
+
+  render();
+}
+
+function setTrack(index: number): void {
+  if (!POPUP_MUSIC_TRACKS.length) {
+    return;
+  }
+
+  const normalizedIndex = (index + POPUP_MUSIC_TRACKS.length) % POPUP_MUSIC_TRACKS.length;
+  const wasPlaying = isTrackPlaying;
+  activeTrackIndex = normalizedIndex;
+  syncAudioSource();
+  render();
+
+  if (wasPlaying) {
+    void playCurrentTrack();
+  }
+}
+
+function toggleTrackPlayback(): void {
+  if (popupAudio.paused) {
+    void playCurrentTrack();
+    return;
+  }
+
+  popupAudio.pause();
+  isTrackPlaying = false;
+  render();
 }
 
 async function validateAndSaveApiKey(input: HTMLInputElement): Promise<void> {
@@ -346,6 +504,18 @@ function bindEvents(): void {
     });
   });
 
+  document.querySelector<HTMLButtonElement>('[data-action="music-prev"]')?.addEventListener('click', () => {
+    setTrack(activeTrackIndex - 1);
+  });
+
+  document.querySelector<HTMLButtonElement>('[data-action="music-next"]')?.addEventListener('click', () => {
+    setTrack(activeTrackIndex + 1);
+  });
+
+  document.querySelector<HTMLButtonElement>('[data-action="music-toggle"]')?.addEventListener('click', () => {
+    toggleTrackPlayback();
+  });
+
   document.querySelector<HTMLElement>('.theme-view')?.addEventListener('click', (event) => {
     const accentTarget = (event.target as HTMLElement).closest<HTMLElement>('[data-accent-id]');
 
@@ -416,6 +586,21 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 });
 
 void (async () => {
+  popupAudio.addEventListener('play', () => {
+    isTrackPlaying = true;
+    render();
+  });
+
+  popupAudio.addEventListener('pause', () => {
+    isTrackPlaying = false;
+    render();
+  });
+
+  popupAudio.addEventListener('ended', () => {
+    setTrack(activeTrackIndex + 1);
+  });
+
   draftSettings = await loadSettings();
+  syncAudioSource();
   render();
 })();
